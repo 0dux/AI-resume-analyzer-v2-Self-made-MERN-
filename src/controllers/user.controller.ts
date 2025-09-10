@@ -4,6 +4,7 @@ import { User } from "../models/user.model";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken";
 
+//Register a new user
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const newUser = req.body;
@@ -39,6 +40,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
     return res.json({
       message: "User created succesfully!!!",
+      //sending id in the token
       token: generateToken(createdUser._id.toString()),
     });
   } catch (error) {
@@ -72,9 +74,12 @@ export const loginUser = async (req: Request, res: Response) => {
       });
     }
 
-    const passwordsMatch = await bcrypt.compare(password, userExists.password);
+    const isPasswordsMatch = await bcrypt.compare(
+      password,
+      userExists.password
+    );
     //check if the passwords match or not
-    if (!passwordsMatch) {
+    if (!isPasswordsMatch) {
       return res.status(401).json({
         message: "Incorrect password entered!!!",
       });

@@ -1,5 +1,12 @@
 import mongoose from "mongoose";
 
+interface user {
+  fullName: string;
+  email: string;
+  password: string;
+  Resume: string[];
+}
+
 const userSchema = new mongoose.Schema({
   fullName: {
     type: String,
@@ -17,8 +24,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    min: 8,
+    minLength: 8,
+  },
+  Resume: {
+    type: [String],
+    validate: {
+      validator: function (val: string[]) {
+        return val.length <= 4;
+      },
+      message: "You can upload a maximum of 4 resumes",
+    },
+    default: [],
   },
 });
 
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.model<user>("User", userSchema);

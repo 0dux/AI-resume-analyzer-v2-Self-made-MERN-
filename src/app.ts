@@ -1,4 +1,4 @@
-import express, { Express, urlencoded } from "express";
+import express, { Express } from "express";
 import UserRouter from "./routes/user.router";
 
 const app: Express = express();
