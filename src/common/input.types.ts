@@ -1,4 +1,4 @@
-import z, { email } from "zod";
+import z from "zod";
 
 export const registerUserSchema = z.object({
   fullName: z.string(),

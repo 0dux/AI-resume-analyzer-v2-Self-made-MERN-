@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { loginUserSchema, registerUserSchema } from "../types/inputTypes";
+import { loginUserSchema, registerUserSchema } from "../common/input.types";
 import { User } from "../models/user.model";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken";

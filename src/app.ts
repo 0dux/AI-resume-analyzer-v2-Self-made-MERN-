@@ -1,5 +1,5 @@
 import express, { Express, urlencoded } from "express";
-import UserRouter from "./routes/userRouter";
+import UserRouter from "./routes/user.router";
 
 const app: Express = express();
 
