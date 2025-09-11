@@ -2,8 +2,11 @@ import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/generateToken";
 
 declare global {
+  //basically you need to extend the type
   namespace Express {
+    //of Request in express and then add in whatever
     interface Request {
+      //that you want to pass
       userId?: string;
     }
   }
@@ -24,6 +27,7 @@ const userAuth = (req: Request, res: Response, next: NextFunction) => {
       message: "Invalid token shared!!!",
     });
   }
+
   req.userId = decodedTokenObject.id;
   next();
 };
