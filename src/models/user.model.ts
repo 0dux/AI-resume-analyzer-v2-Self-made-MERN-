@@ -4,8 +4,32 @@ interface user {
   fullName: string;
   email: string;
   password: string;
-  Resume: string[];
+  Resume: Resume[];
 }
+
+interface Resume {
+  pdfUrl: string;
+  imageUrl: string;
+  feedback?: string;
+  uploadedAt: Date;
+}
+
+const resumeSchema = new mongoose.Schema<Resume>({
+  pdfUrl: {
+    type: String,
+    required: true,
+  },
+  imageUrl: {
+    type: String,
+  },
+  feedback: {
+    type: String,
+  },
+  uploadedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
 const userSchema = new mongoose.Schema({
   fullName: {
@@ -26,10 +50,10 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minLength: 8,
   },
-  Resume: {
-    type: [String],
+  resumes: {
+    type: [resumeSchema],
     validate: {
-      validator: function (val: string[]) {
+      validator: function (val: Resume[]) {
         return val.length <= 4;
       },
       message: "You can upload a maximum of 4 resumes",
