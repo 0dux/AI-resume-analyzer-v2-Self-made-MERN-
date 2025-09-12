@@ -1,40 +1,57 @@
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
 import express from "express";
 import multer from "multer";
-import path from "path";
+import streamifier from "streamifier";
 import userAuth from "../middlewares/user.auth";
 
-const storage = multer.diskStorage({
-  //storage engine is responsible for storing the files sent via multer
-  destination: (req, file, cb) => {
-    cb(null, path.join(process.cwd(), "src", "uploads"));
-  },
-  filename: (req, file, cb) => {
-    const suffix = Date.now();
-    cb(null, `${suffix}-${file.originalname}`);
-  },
+dotenv.config();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const upload = multer({
-  storage,
-});
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
 const resumeRouter = express.Router();
+
+// helper to stream buffer to cloudinary
+const streamUpload = (buffer: Buffer) =>
+  new Promise<any>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: "auto" }, // auto = pdf/images/videos all handled
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
 
 resumeRouter.post(
   "/upload",
   userAuth,
   upload.single("resume"),
   async (req, res) => {
-    const userId = req.userId;
-    const { fname, lname } = req.body;
-    const resume = req.file;
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
 
-    res.json({
-      userId,
-      fname,
-      lname,
-      message: "file stored succesfully!!!",
-      resume,
-    });
+      const result = await streamUpload(req.file.buffer);
+
+      return res.json({
+        fname: req.body,
+        message: "Upload success",
+        url: result.secure_url,
+      });
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      return res.status(500).json({ message: err.message });
+    }
   }
 );
 
