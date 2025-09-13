@@ -1,26 +1,23 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 interface user {
   fullName: string;
   email: string;
   password: string;
-  Resume: Resume[];
+  resumes: Resume[];
 }
 
 interface Resume {
+  _id?: Types.ObjectId;
   pdfUrl: string;
-  imageUrl: string;
   feedback?: string;
-  uploadedAt: Date;
+  uploadedAt?: Date;
 }
 
 const resumeSchema = new mongoose.Schema<Resume>({
   pdfUrl: {
     type: String,
     required: true,
-  },
-  imageUrl: {
-    type: String,
   },
   feedback: {
     type: String,
@@ -52,12 +49,6 @@ const userSchema = new mongoose.Schema({
   },
   resumes: {
     type: [resumeSchema],
-    validate: {
-      validator: function (val: Resume[]) {
-        return val.length <= 4;
-      },
-      message: "You can upload a maximum of 4 resumes",
-    },
     default: [],
   },
 });

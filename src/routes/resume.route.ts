@@ -2,34 +2,20 @@ import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 import express from "express";
 import multer from "multer";
-import streamifier from "streamifier";
 import userAuth from "../middlewares/user.auth";
+import { streamUpload } from "../utils/helper";
+import { User } from "../models/user.model";
 
 dotenv.config();
-
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 const resumeRouter = express.Router();
-
-// helper to stream buffer to cloudinary
-const streamUpload = (buffer: Buffer) =>
-  new Promise<any>((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { resource_type: "auto" }, // auto = pdf/images/videos all handled
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
-    streamifier.createReadStream(buffer).pipe(uploadStream);
-  });
 
 resumeRouter.post(
   "/upload",
@@ -40,13 +26,31 @@ resumeRouter.post(
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
+      const userId = req.userId;
+      const uploadedFile = await streamUpload(req.file.buffer);
+      const foundUser = await User.findById(userId);
 
-      const result = await streamUpload(req.file.buffer);
+      if (!foundUser) {
+        return res.status(404).json({
+          message:
+            "Cannot upload the user doesn't exist or incorrect headers passed.",
+        });
+      }
+      if (foundUser.resumes.length >= 4) {
+        return res.status(400).json({
+          message: "You cam only upload 4 resumes per user!!!",
+        });
+      }
 
-      return res.json({
-        fname: req.body,
-        message: "Upload success",
-        url: result.secure_url,
+      await foundUser.resumes.push({ pdfUrl: uploadedFile.url });
+
+      await foundUser.save();
+      const latestResume = foundUser.resumes[foundUser.resumes.length - 1];
+
+      res.json({
+        message: "Resume added succesfully!!!",
+        resumeUrl: latestResume.pdfUrl,
+        resumeId: latestResume._id,
       });
     } catch (err: any) {
       console.error("Upload error:", err);
